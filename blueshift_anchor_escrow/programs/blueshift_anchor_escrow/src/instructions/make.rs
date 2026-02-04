@@ -40,13 +40,12 @@ pub struct Make<'info> {
     pub maker_ata_a: InterfaceAccount<'info, TokenAccount>,
 
     #[account(
-        init,
-        payer = maker,
-        associated_token::mint=mint_b,
-        associated_token::authority=maker,
+        mut,
+        associated_token::mint=mint_a,
+        associated_token::authority=escrow,
         associated_token::token_program=token_program,
     )]
-    pub vaulet: InterfaceAccount<'info, TokenAccount>,
+    pub vault: InterfaceAccount<'info, TokenAccount>,
 
     pub system_program: Program<'info, System>,
     pub associated_token_program: Program<'info, AssociatedToken>,
@@ -72,7 +71,7 @@ impl<'info> Make<'info> {
                 self.token_program.to_account_info(),
                 TransferChecked {
                     from: self.maker_ata_a.to_account_info(),
-                    to: self.vaulet.to_account_info(),
+                    to: self.vault.to_account_info(),
                     authority: self.maker.to_account_info(),
                     mint: self.mint_a.to_account_info(),
                 },

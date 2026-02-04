@@ -32,11 +32,11 @@ pub struct Take<'info> {
 
     #[account(
       mut,
-      associated_token::mint=mint_b,
-      associated_token::authority=maker,
+      associated_token::mint=mint_a,
+      associated_token::authority=escrow,
       associated_token::token_program=token_program,
   )]
-    pub vaulet: Box<InterfaceAccount<'info, TokenAccount>>,
+    pub vault: Box<InterfaceAccount<'info, TokenAccount>>,
 
     #[account(
       init_if_needed,
@@ -96,24 +96,25 @@ impl<'info> Take<'info> {
         ]];
 
         transfer_checked(
-            CpiContext::new(
+            CpiContext::new_with_signer(
                 self.token_program.to_account_info(),
                 TransferChecked {
-                    from: self.vaulet.to_account_info(),
+                    from: self.vault.to_account_info(),
                     mint: self.mint_a.to_account_info(),
                     to: self.take_ata_a.to_account_info(),
-                    authority: self.maker.to_account_info(),
+                    authority: self.escrow.to_account_info(),
                 },
+                &signer_seeds,
             ),
-            self.vaulet.amount,
+            self.vault.amount,
             self.mint_a.decimals,
         )?;
 
         close_account(CpiContext::new_with_signer(
             self.token_program.to_account_info(),
             CloseAccount {
-                account: self.vaulet.to_account_info(),
-                authority: self.maker.to_account_info(),
+                account: self.vault.to_account_info(),
+                authority: self.escrow.to_account_info(),
                 destination: self.maker.to_account_info(),
             },
             &signer_seeds,

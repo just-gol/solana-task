@@ -27,10 +27,10 @@ pub struct Refund<'info> {
     #[account(
       mut,
       associated_token::mint=mint_a,
-      associated_token::authority=maker,
+      associated_token::authority=escrow,
       associated_token::token_program=token_program,
     )]
-    pub vaulet: Box<InterfaceAccount<'info, TokenAccount>>,
+    pub vault: Box<InterfaceAccount<'info, TokenAccount>>,
 
     #[account(
       mut,
@@ -53,24 +53,25 @@ pub fn handler(ctx: Context<Refund>) -> Result<()> {
         &[ctx.accounts.escrow.bump],
     ]];
     transfer_checked(
-        CpiContext::new(
+        CpiContext::new_with_signer(
             ctx.accounts.token_program.to_account_info(),
             TransferChecked {
-                from: ctx.accounts.vaulet.to_account_info(),
+                from: ctx.accounts.vault.to_account_info(),
                 mint: ctx.accounts.mint_a.to_account_info(),
                 to: ctx.accounts.maker_ata_a.to_account_info(),
-                authority: ctx.accounts.maker.to_account_info(),
+                authority: ctx.accounts.escrow.to_account_info(),
             },
+            &signer_seeds,
         ),
-        ctx.accounts.escrow.receive,
+        ctx.accounts.vault.amount,
         ctx.accounts.mint_a.decimals,
     )?;
 
     close_account(CpiContext::new_with_signer(
         ctx.accounts.token_program.to_account_info(),
         CloseAccount {
-            account: ctx.accounts.vaulet.to_account_info(),
-            authority: ctx.accounts.maker.to_account_info(),
+            account: ctx.accounts.vault.to_account_info(),
+            authority: ctx.accounts.escrow.to_account_info(),
             destination: ctx.accounts.maker.to_account_info(),
         },
         &signer_seeds,
