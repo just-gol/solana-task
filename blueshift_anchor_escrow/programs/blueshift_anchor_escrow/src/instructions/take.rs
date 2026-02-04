@@ -96,15 +96,14 @@ impl<'info> Take<'info> {
         ]];
 
         transfer_checked(
-            CpiContext::new_with_signer(
+            CpiContext::new(
                 self.token_program.to_account_info(),
                 TransferChecked {
                     from: self.vaulet.to_account_info(),
                     mint: self.mint_a.to_account_info(),
                     to: self.take_ata_a.to_account_info(),
-                    authority: self.escrow.to_account_info(),
+                    authority: self.maker.to_account_info(),
                 },
-                &signer_seeds,
             ),
             self.vaulet.amount,
             self.mint_a.decimals,
@@ -114,7 +113,7 @@ impl<'info> Take<'info> {
             self.token_program.to_account_info(),
             CloseAccount {
                 account: self.vaulet.to_account_info(),
-                authority: self.escrow.to_account_info(),
+                authority: self.maker.to_account_info(),
                 destination: self.maker.to_account_info(),
             },
             &signer_seeds,

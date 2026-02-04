@@ -5,6 +5,7 @@ declare_id!("6GNxX3PgZuHG3gi9o1gjye1CyyC3eVCTVGMQnV7EBnV7");
 pub mod errors;
 pub mod instructions;
 pub mod state;
+pub use instructions::*;
 
 #[program]
 pub mod blueshift_anchor_escrow {

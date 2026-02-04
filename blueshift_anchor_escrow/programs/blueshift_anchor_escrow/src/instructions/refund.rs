@@ -1,10 +1,79 @@
 use anchor_lang::prelude::*;
 
+use crate::{errors::EscrowError, state::Escrow};
+use anchor_spl::{
+    associated_token::AssociatedToken,
+    token_interface::{
+        close_account, transfer_checked, CloseAccount, Mint, TokenAccount, TokenInterface,
+        TransferChecked,
+    },
+};
 #[derive(Accounts)]
 pub struct Refund<'info> {
-    // TODO: add required accounts for refund flow
+    #[account(mut)]
+    pub maker: Signer<'info>,
+
+    #[account(
+    mut,
+    seeds = [b"escrow", maker.key().as_ref(), escrow.seed.to_le_bytes().as_ref()],
+    bump = escrow.bump,
+    has_one = maker @EscrowError::InvalidMaker,
+    has_one = mint_a @EscrowError::InvalidMintA,
+  )]
+    pub escrow: Box<Account<'info, Escrow>>,
+
+    pub mint_a: Box<InterfaceAccount<'info, Mint>>,
+
+    #[account(
+      mut,
+      associated_token::mint=mint_a,
+      associated_token::authority=maker,
+      associated_token::token_program=token_program,
+    )]
+    pub vaulet: Box<InterfaceAccount<'info, TokenAccount>>,
+
+    #[account(
+      mut,
+      associated_token::mint=mint_a,
+      associated_token::authority=maker,
+      associated_token::token_program=token_program,
+  )]
+    pub maker_ata_a: InterfaceAccount<'info, TokenAccount>,
+
+    pub token_program: Interface<'info, TokenInterface>,
+    pub associated_token_program: Program<'info, AssociatedToken>,
+    pub system_program: Program<'info, System>,
 }
 
-pub fn handler(_ctx: Context<Refund>) -> Result<()> {
+pub fn handler(ctx: Context<Refund>) -> Result<()> {
+    let signer_seeds: [&[&[u8]]; 1] = [&[
+        b"escrow",
+        &ctx.accounts.maker.to_account_info().key.as_ref(),
+        &ctx.accounts.escrow.seed.to_le_bytes()[..],
+        &[ctx.accounts.escrow.bump],
+    ]];
+    transfer_checked(
+        CpiContext::new(
+            ctx.accounts.token_program.to_account_info(),
+            TransferChecked {
+                from: ctx.accounts.vaulet.to_account_info(),
+                mint: ctx.accounts.mint_a.to_account_info(),
+                to: ctx.accounts.maker_ata_a.to_account_info(),
+                authority: ctx.accounts.maker.to_account_info(),
+            },
+        ),
+        ctx.accounts.escrow.receive,
+        ctx.accounts.mint_a.decimals,
+    )?;
+
+    close_account(CpiContext::new_with_signer(
+        ctx.accounts.token_program.to_account_info(),
+        CloseAccount {
+            account: ctx.accounts.vaulet.to_account_info(),
+            authority: ctx.accounts.maker.to_account_info(),
+            destination: ctx.accounts.maker.to_account_info(),
+        },
+        &signer_seeds,
+    ))?;
     Ok(())
 }
