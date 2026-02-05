@@ -40,16 +40,18 @@ pub struct Make<'info> {
     pub maker_ata_a: InterfaceAccount<'info, TokenAccount>,
 
     #[account(
-        mut,
+        init_if_needed,
+        payer = maker,
         associated_token::mint=mint_a,
         associated_token::authority=escrow,
         associated_token::token_program=token_program,
     )]
     pub vault: InterfaceAccount<'info, TokenAccount>,
 
-    pub system_program: Program<'info, System>,
+    /// Programs
     pub associated_token_program: Program<'info, AssociatedToken>,
     pub token_program: Interface<'info, TokenInterface>,
+    pub system_program: Program<'info, System>,
 }
 
 impl<'info> Make<'info> {

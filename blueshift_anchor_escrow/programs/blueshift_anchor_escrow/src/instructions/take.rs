@@ -24,6 +24,7 @@ pub struct Take<'info> {
       has_one = maker @EscrowError::InvalidMaker,
       has_one = mint_a @EscrowError::InvalidMintA,
       has_one = mint_b @EscrowError::InvalidMintB,
+      close = maker,
     )]
     pub escrow: Box<Account<'info, Escrow>>,
 
@@ -48,7 +49,8 @@ pub struct Take<'info> {
     pub take_ata_a: Box<InterfaceAccount<'info, TokenAccount>>,
 
     #[account(
-      mut,
+      init_if_needed,
+      payer = taker,
       associated_token::mint=mint_b,
       associated_token::authority=taker,
       associated_token::token_program=token_program,
@@ -64,8 +66,9 @@ pub struct Take<'info> {
   )]
     pub maker_ata_b: Box<InterfaceAccount<'info, TokenAccount>>,
 
-    pub token_program: Interface<'info, TokenInterface>,
+    /// Programs
     pub associated_token_program: Program<'info, AssociatedToken>,
+    pub token_program: Interface<'info, TokenInterface>,
     pub system_program: Program<'info, System>,
 }
 
