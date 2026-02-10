@@ -1,0 +1,16 @@
+# Rust / Anchor build artifacts
+target/
+**/target/
+test-ledger/
+**/test-ledger/
+.anchor/
+**/.anchor/
+
+# Node / JS
+node_modules/
+**/node_modules/
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
